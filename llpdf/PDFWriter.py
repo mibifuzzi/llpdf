@@ -25,6 +25,7 @@ from llpdf.repr.PDFSerializer import PDFSerializer
 from llpdf.types.CompressedObjectContainer import CompressedObjectContainer
 from llpdf.types.XRefTable import XRefTable, UncompressedXRefEntry, ReservedXRefEntry
 from llpdf.FileRepr import FileWriterDecorator
+from llpdf.types.PDFName import PDFName
 
 class PDFWriteContext(object):
 	_log = logging.getLogger("llpdf.PDFWriteContext")
@@ -125,17 +126,18 @@ class PDFWriteContext(object):
 			self._write_uncompressed_object(container_obj)
 
 	def _write_xrefs(self):
+		self._xref_table.xref_offset = self._f.tell()
 		if not self.use_xref_stream:
-			self._xref.write_xref_table(f)
+			self._xref_table.write_xref_table(self._f)
+			self._pdf.trailer[PDFName("/Size")] = self._xref_table._max_objid + 1
 			self._write_trailer()
 		else:
 			xref_object = self._xref_table.serialize_xref_object(self._pdf.trailer, self._xref_table.get_free_objid())
-			self._xref_table.xref_offset = self._f.tell()
 			self._write_uncompressed_object(xref_object)
 
 	def _write_trailer(self):
 		self._f.writeline("trailer")
-		self._f.write(self._serializer.serialize(self._pdf.trailer, start_offset = self._f.tell()))
+		self._f.write(self._writer._serializer.serialize(self._pdf.trailer, start_offset = self._f.tell()))
 
 	def _write_finish(self):
 		self._f.writeline("startxref")

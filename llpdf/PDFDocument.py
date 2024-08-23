@@ -174,7 +174,7 @@ class PDFDocument(object):
 					self._log.warning("Indirect length reference supposed to point to integer value, but points to %s (%s)", length_obj, length)
 				else:
 					if length != len(obj):
-						obj.truncate(length)
+						obj.truncatetrail(length)
 
 	def _read_textline(self):
 		line = self._f.readline_nonempty().decode("ascii").rstrip("\r\n")
